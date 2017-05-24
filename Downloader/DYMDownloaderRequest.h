@@ -7,13 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @class DYMDownloaderRequest;
 
 @protocol DYMDownloaderRequestDelegate <NSObject>
 
-- (void)downloadWillBeginRequest:(DYMDownloaderRequest *)request;
-- (void)downloadDidRequest:(DYMDownloaderRequest *)request reciveLength:(CGFloat)reciveLength;
+- (void)downloadDidRequest:(DYMDownloaderRequest *)request progress:(NSProgress *)progress;
+
+- (void)downloadDidFinished:(DYMDownloaderRequest *)request;
 
 @end
 
@@ -23,6 +25,10 @@
 
 @property (nonatomic, copy) NSString *downloadUrl;
 @property (nonatomic, copy) NSString *downloadFilePath;
-@property (nonatomic, copy) NSString *tempLoadFilePath;
+@property (nonatomic, copy) NSString *indentifire;
+
+- (void)cancel;
+
+- (void)resume;
 
 @end

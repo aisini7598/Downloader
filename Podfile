@@ -5,7 +5,7 @@ target 'Downloader' do
   # Uncomment the next line if you're using Swift or would like to use dynamic frameworks
   # use_frameworks!
 pod 'AFNetworking', '~> 3.1.0'
-
+pod 'YYModel', '~> 1.0.4'
   # Pods for Downloader
 
 end

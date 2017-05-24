@@ -9,10 +9,29 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
-typedef void (^completedBlock) (CGFloat progress, BOOL finished);
+extern NSString *const DownloadFinishedNotification;
+extern NSString *const DownloadChangedNotification;
+extern NSString *const DownloadAddNewTaskNotification;
+
+extern NSString *const DownloadIdentifire;
+extern NSString *const DownloadTotalProgress;
+extern NSString *const DownloadCurrentProgress;
+
+@class DownloadInfoMessage;
+
+typedef void (^completedBlock) (NSProgress *progress, BOOL finished);
 
 @interface DYMDownloaderManager : NSObject
 
-- (void)downloadUrl:(NSString *)url completedBlock:(completedBlock)completedBlock;
+- (NSArray *)unFinishedList;
+- (NSArray *)finishedList;
+
++ (instancetype)sharedInstance;
+
+- (void)downloadTask:(DownloadInfoMessage *)task completedBlock:(completedBlock)completedBlock;
+- (void)downloadTaskUrl:(NSString *)url completedBlcok:(completedBlock)completedBlock;
+
+- (void)cancelDownloadUrl:(NSString *)url;
+- (void)startDownloadUrl:(NSString *)url;
 
 @end

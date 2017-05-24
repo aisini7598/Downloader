@@ -9,8 +9,13 @@
 #import "DYMDownloaderRequest.h"
 #import <AFNetworking/AFNetworking.h>
 
+#import "AFNetworkServiceManager.h"
+
 @interface DYMDownloaderRequest ()
-@property (nonatomic) AFHTTPSessionManager *downloadManager;
+
+@property (nonatomic) NSURLSessionDownloadTask *downloadTask;
+
+
 @end
 
 @implementation DYMDownloaderRequest
@@ -18,33 +23,43 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        AFHTTPSessionManager *downloadManager = [[AFHTTPSessionManager alloc] init];
-        AFHTTPRequestSerializer *requestSerializer = [[AFHTTPRequestSerializer alloc] init];
-        requestSerializer.timeoutInterval = 60;
-        downloadManager.requestSerializer = requestSerializer;
-        downloadManager.responseSerializer = [AFHTTPResponseSerializer serializer];
-        _downloadManager = downloadManager;
-    }
+            }
     return self;
 }
 
 - (void)main {
-    [super main];
-    
     if (self.downloadUrl.length > 0) {
-        NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:self.downloadUrl]];
         
-        [_downloadManager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
+        
+        
+        NSURLSessionDownloadTask *downloadTask = [[AFNetworkServiceManager sharedInstanced] dowoloadUrl:self.downloadUrl filePath:self.downloadFilePath progress:^(NSProgress *progress) {
             
-        } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(downloadDidRequest:progress:)]) {
+                [self.delegate downloadDidRequest:self progress:progress];
+            }
             
-            
-            return [NSURL fileURLWithPath:self.downloadFilePath];
-        } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-            
+        } completedBlock:^(BOOL isFinished, NSError *error) {
+            if (self.delegate && [self.delegate respondsToSelector:@selector(downloadDidFinished:)]) {
+                [self.delegate downloadDidFinished:self];
+            }
         }];
-    }
+        
+        [downloadTask resume];
+        _downloadTask = downloadTask;
+    }    
+}
+
+- (void)cancel {
+    [_downloadTask suspend];
+}
+
+- (void)resume {
+    [_downloadTask resume];
+}
+
+- (CGSize)fileSize {
     
+    return CGSizeZero;
 }
 
 @end

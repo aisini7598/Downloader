@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		522105B01ED53B1E00C16055 /* DownloadInfoMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = 522105AF1ED53B1E00C16055 /* DownloadInfoMessage.m */; };
+		522105B31ED53C2200C16055 /* AFNetworkServiceManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 522105B21ED53C2200C16055 /* AFNetworkServiceManager.m */; };
+		522105B81ED5612700C16055 /* DownloadUnitTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 522105B71ED5612700C16055 /* DownloadUnitTool.m */; };
+		522105BB1ED56B2500C16055 /* HistoryTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 522105BA1ED56B2500C16055 /* HistoryTableViewController.m */; };
 		526FE6941ECEDF8200D954B1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 526FE6931ECEDF8200D954B1 /* main.m */; };
 		526FE6971ECEDF8200D954B1 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 526FE6961ECEDF8200D954B1 /* AppDelegate.m */; };
 		526FE69A1ECEDF8200D954B1 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 526FE6991ECEDF8200D954B1 /* ViewController.m */; };
@@ -19,6 +23,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		522105AE1ED53B1E00C16055 /* DownloadInfoMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadInfoMessage.h; sourceTree = "<group>"; };
+		522105AF1ED53B1E00C16055 /* DownloadInfoMessage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadInfoMessage.m; sourceTree = "<group>"; };
+		522105B11ED53C2200C16055 /* AFNetworkServiceManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AFNetworkServiceManager.h; sourceTree = "<group>"; };
+		522105B21ED53C2200C16055 /* AFNetworkServiceManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AFNetworkServiceManager.m; sourceTree = "<group>"; };
+		522105B61ED5612700C16055 /* DownloadUnitTool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DownloadUnitTool.h; sourceTree = "<group>"; };
+		522105B71ED5612700C16055 /* DownloadUnitTool.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DownloadUnitTool.m; sourceTree = "<group>"; };
+		522105B91ED56B2500C16055 /* HistoryTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HistoryTableViewController.h; sourceTree = "<group>"; };
+		522105BA1ED56B2500C16055 /* HistoryTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HistoryTableViewController.m; sourceTree = "<group>"; };
 		526FE68F1ECEDF8200D954B1 /* Downloader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Downloader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		526FE6931ECEDF8200D954B1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		526FE6951ECEDF8200D954B1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -79,6 +91,14 @@
 				526FE6AA1ECEE00200D954B1 /* DYMDownloaderManager.m */,
 				526FE6AC1ECEE01D00D954B1 /* DYMDownloaderRequest.h */,
 				526FE6AD1ECEE01D00D954B1 /* DYMDownloaderRequest.m */,
+				522105AE1ED53B1E00C16055 /* DownloadInfoMessage.h */,
+				522105AF1ED53B1E00C16055 /* DownloadInfoMessage.m */,
+				522105B11ED53C2200C16055 /* AFNetworkServiceManager.h */,
+				522105B21ED53C2200C16055 /* AFNetworkServiceManager.m */,
+				522105B61ED5612700C16055 /* DownloadUnitTool.h */,
+				522105B71ED5612700C16055 /* DownloadUnitTool.m */,
+				522105B91ED56B2500C16055 /* HistoryTableViewController.h */,
+				522105BA1ED56B2500C16055 /* HistoryTableViewController.m */,
 				526FE69B1ECEDF8200D954B1 /* Main.storyboard */,
 				526FE69E1ECEDF8200D954B1 /* Assets.xcassets */,
 				526FE6A01ECEDF8200D954B1 /* LaunchScreen.storyboard */,
@@ -236,10 +256,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				522105BB1ED56B2500C16055 /* HistoryTableViewController.m in Sources */,
 				526FE69A1ECEDF8200D954B1 /* ViewController.m in Sources */,
+				522105B01ED53B1E00C16055 /* DownloadInfoMessage.m in Sources */,
 				526FE6AB1ECEE00200D954B1 /* DYMDownloaderManager.m in Sources */,
+				522105B81ED5612700C16055 /* DownloadUnitTool.m in Sources */,
 				526FE6AE1ECEE01D00D954B1 /* DYMDownloaderRequest.m in Sources */,
 				526FE6971ECEDF8200D954B1 /* AppDelegate.m in Sources */,
+				522105B31ED53C2200C16055 /* AFNetworkServiceManager.m in Sources */,
 				526FE6941ECEDF8200D954B1 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
