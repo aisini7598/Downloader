@@ -19,7 +19,18 @@ extern NSString *const DownloadCurrentProgress;
 
 @class DownloadInfoMessage;
 
+
 typedef void (^completedBlock) (NSProgress *progress, BOOL finished);
+
+@class DYMDownloaderManager;
+
+@protocol DYMDownloadManagerDelegate <NSObject>
+
+- (void)downloadUpdateProgress:(DYMDownloaderManager *)downloadManager identifire:(NSString *)indentifire;
+- (void)downloadFinished:(DYMDownloaderManager *)downloadManager;
+- (void)downloadExistTask:(DYMDownloaderManager *)downloadManager;
+
+@end
 
 @interface DYMDownloaderManager : NSObject
 
@@ -28,8 +39,15 @@ typedef void (^completedBlock) (NSProgress *progress, BOOL finished);
 
 + (instancetype)sharedInstance;
 
+@property (nonatomic, weak) id <DYMDownloadManagerDelegate> downloadDelegate;
+
+- (void)setMaxCount:(NSInteger)maxCount;
+
 - (void)downloadTask:(DownloadInfoMessage *)task completedBlock:(completedBlock)completedBlock;
 - (void)downloadTaskUrl:(NSString *)url completedBlcok:(completedBlock)completedBlock;
+
+
+- (void)downloadTaskUrl:(NSString *)url;
 
 - (void)cancelDownloadUrl:(NSString *)url;
 - (void)startDownloadUrl:(NSString *)url;

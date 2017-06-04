@@ -15,14 +15,6 @@ NSString *const prepareDownload = @"prepareDownload";
 NSString *const downloading = @"downloading";
 NSString *const downloadFinished = @"finished";
 
-typedef NS_ENUM(NSInteger , DownloadState) {
-    DownloadStateNone = 0,
-    DownloadStatePrepare,
-    DownloadStateDownloading,
-    DownloadStatePause,
-    DownloadStateCancel,
-    DownloadStateFinished
-};
 
 
 @class DownloadTabelViewCell;
@@ -43,6 +35,8 @@ typedef NS_ENUM(NSInteger , DownloadState) {
 @property (nonatomic, weak) UIProgressView *progressView;
 
 @property (nonatomic, weak) id<DownloadTabelViewCellDelegate> delegate;
+
+@property (nonatomic) DownloadInfoMessage *info;
 
 @end
 
@@ -100,34 +94,16 @@ typedef NS_ENUM(NSInteger , DownloadState) {
 }
 
 - (void)setData:(DownloadInfoMessage *)data {
+    _info = data;
     self.downloadNameLabel.text = data.downloadUrl.lastPathComponent;
     [self.downloadButton setTitle:data.isFinished ? @"完成":@"下载中" forState:UIControlStateNormal];
-    self.progressView.progress = data.currentSize * 1.0 / data.fileSize;
+    self.progressView.progress = data.currentSize == 0 ? 0 : data.currentSize * 1.0 / data.fileSize;
     [self setNeedsLayout];
 }
 
 - (NSString *)stringOfState:(DownloadState)state {
     
     NSString *str = @"";
-    
-    switch (state) {
-        case DownloadStatePause:
-        case DownloadStatePrepare:
-            str = @"开始";
-            break;
-        case DownloadStateCancel:
-            str = @"重新开始";
-            break;
-        case DownloadStateFinished:
-            str = @"完成";
-            break;
-        case DownloadStateDownloading:
-            str = @"暂停";
-            break;
-        default:
-            break;
-    }
-    
     return str;
     
 }
@@ -135,7 +111,7 @@ typedef NS_ENUM(NSInteger , DownloadState) {
 @end
 
 
-@interface ViewController () <UITableViewDelegate, UITableViewDataSource,DownloadTabelViewCellDelegate, NSURLSessionDataDelegate>
+@interface ViewController () <UITableViewDelegate, UITableViewDataSource,DownloadTabelViewCellDelegate, NSURLSessionDataDelegate, DYMDownloadManagerDelegate>
 
 @property (nonatomic, weak) UITableView *downloadList;
 
@@ -152,7 +128,6 @@ typedef NS_ENUM(NSInteger , DownloadState) {
 
 - (void)loadView {
     [super loadView];
-    
 
     UITableView *downloadList = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStylePlain];
     downloadList.delegate = self;
@@ -168,50 +143,41 @@ typedef NS_ENUM(NSInteger , DownloadState) {
     [super viewDidLoad];
     
     self.sectionArray = @[@"正在下载",@"已完成"];
-    [self reloadData];
+
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(downloadFinished:) name:DownloadFinishedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(downloadProgressChanged:) name:DownloadChangedNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(downloadAddNewTask:) name:DownloadAddNewTaskNotification object:nil];
-    
+    [DYMDownloaderManager sharedInstance].downloadDelegate = self;
     
     // Do any additional setup after loading the view, typically from a nib.
 }
 
 
-#pragma notification
+//#pragma notification
+//
+//- (void)downloadFinished:(NSNotification *)nf {
+//    [self reloadData];
+//}
+//
+//- (void)downloadProgressChanged:(NSNotification *)nf {
+//    NSDictionary *progressInfo = [nf object];
+//    for (DownloadInfoMessage *info in [self.dataSource[self.sectionArray[0]] copy]) {
+//        if ([info.indentifire isEqualToString:progressInfo[DownloadIdentifire]]) {
+//            info.fileSize = [progressInfo[DownloadTotalProgress] longLongValue];
+//            info.currentSize = [progressInfo[DownloadCurrentProgress] longLongValue];
+//            
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [self.downloadList reloadData];
+//            });
+//            
+//            break;
+//        }
+//    }
+//}
 
-- (void)downloadFinished:(NSNotification *)nf {
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    
     [self reloadData];
-}
-
-- (void)downloadProgressChanged:(NSNotification *)nf {
-    NSDictionary *progressInfo = [nf object];
-    for (DownloadInfoMessage *info in [self.dataSource[self.sectionArray[0]] copy]) {
-        if ([info.indentifire isEqualToString:progressInfo[DownloadIdentifire]]) {
-            info.fileSize = [progressInfo[DownloadTotalProgress] longLongValue];
-            info.currentSize = [progressInfo[DownloadCurrentProgress] longLongValue];
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.downloadList reloadData];
-            });
-            
-            break;
-        }
-    }
-}
-
-- (void)downloadAddNewTask:(NSNotification *)nf {
-    
-    NSArray *unFinished = [DYMDownloaderManager sharedInstance].unFinishedList.copy;
-    NSMutableDictionary *dataSource = [self.dataSource mutableCopy];
-    [dataSource setValue:unFinished forKey:self.sectionArray[0]];
-    self.dataSource = dataSource.copy;
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.downloadList reloadData];
-    });
-    
 }
 
 - (void)reloadData {
@@ -268,7 +234,6 @@ typedef NS_ENUM(NSInteger , DownloadState) {
         [cell setData:info];
         cell.delegate = self;
     }
-    
     return cell;
 
 }
@@ -285,6 +250,33 @@ typedef NS_ENUM(NSInteger , DownloadState) {
             [[DYMDownloaderManager sharedInstance] cancelDownloadUrl:info.downloadUrl];
         }
     }
+}
+
+- (void)downloadFinished:(DYMDownloaderManager *)downloadManager {
+    [self reloadData];
+}
+
+- (void)downloadExistTask:(DYMDownloaderManager *)downloadManager {
+
+}
+
+- (void)downloadUpdateProgress:(DYMDownloaderManager *)downloadManager identifire:(NSString *)indentifire {
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"indentifire = %@",indentifire];
+    NSArray *downloading = self.dataSource[self.sectionArray[0]];
+    
+    NSArray *filtArray = [downloading filteredArrayUsingPredicate:predicate];
+    
+    if (filtArray.count > 0) {
+        DownloadInfoMessage *info = downloading.lastObject;
+        
+        for (DownloadTabelViewCell *cell in self.downloadList.visibleCells) {
+            if ([cell.info.indentifire isEqualToString:info.indentifire]) {
+                [cell setData:info];
+            }
+            
+        }
+    }
+    
 }
 
 @end
