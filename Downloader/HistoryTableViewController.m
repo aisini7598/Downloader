@@ -88,10 +88,10 @@
     
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    [[DYMDownloaderManager sharedInstance] downloadTaskUrl:self.dataSource[indexPath.row] completedBlcok:^(NSProgress *progress, BOOL finished) {
-        
-    }];
-}
+    [[DYMDownloaderManager sharedInstance] downloadTaskUrl:self.dataSource[indexPath.row]];
+    
+    
+     }
 
 /*
 // Override to support conditional editing of the table view.

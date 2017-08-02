@@ -9,6 +9,7 @@
 #import "DYMDownloaderManager.h"
 #import "DYMDownloaderRequest.h"
 #import "DownloadInfoMessage.h"
+#import "DownloadUnitTool.h"
 
 NSString *const DownloadFinishedNotification = @"DownloadFinishedNotification";
 NSString *const DownloadChangedNotification = @"DownloadChangedNotification";
@@ -31,6 +32,8 @@ NSString *const plistFileName = @"downloadConguration.plist";
 
 
 @property (nonatomic) NSMutableArray *requestList;
+
+@property (nonatomic) NSInteger maxCount;
 
 @end
 
@@ -66,8 +69,19 @@ NSString *const plistFileName = @"downloadConguration.plist";
             [_taskList addObjectsFromArray:cacheList];
         }
         
+        _maxCount = 5;
+        
     }
     return self;
+}
+
+- (void)downloadTaskUrl:(NSString *)url {
+    if (![NSURL URLWithString:url]) {
+        return;
+    }
+    
+    [self downloadTaskUrl:url completedBlcok:nil];
+
 }
 
 - (void)downloadTaskUrl:(NSString *)url completedBlcok:(completedBlock)completedBlock {
@@ -84,6 +98,23 @@ NSString *const plistFileName = @"downloadConguration.plist";
 }
 
 - (void)downloadTask:(DownloadInfoMessage *)task completedBlock:(completedBlock)completedBlcok {
+    if ([self downloadMessage:task.indentifire]) {
+        if (self.downloadDelegate && [self.downloadDelegate respondsToSelector:@selector(downloadExistTask:)]) {
+            [self.downloadDelegate downloadExistTask:self];
+        }
+        return;
+    }
+    
+    task.downloadState = DownloadStateDownloading;
+    [self.completionBlocks setValue:completedBlcok forKey:task.indentifire];
+    [self addDownloadList:task];
+
+    
+    [self startDownoad];
+}
+
+- (void)beginDownloadInfo:(DownloadInfoMessage *)task {
+
     DYMDownloaderRequest *request = [[DYMDownloaderRequest alloc] init];
     request.downloadUrl = task.downloadUrl;
     request.downloadFilePath = [self filePath:task.downloadUrl];
@@ -91,14 +122,46 @@ NSString *const plistFileName = @"downloadConguration.plist";
     request.delegate = self;
     
     [self.requestList addObject:request];
+    [self.downloadQueue addOperation:request];
     
-    if ([self downloadMessage:task.indentifire]) {
-        return;
+}
+
+- (void)startDownoad {
+    NSInteger max = _maxCount;
+    
+    NSInteger num = 0;
+
+    for (DownloadInfoMessage *info in self.taskList.copy) {
+        if (info.downloadState == DownloadStateDownloading) {
+            num++;
+            
+            if (num >= max) {
+                
+                info.downloadState = DownloadStateWait;
+            }
+        }
     }
     
-    [self.downloadQueue addOperation:request];
-    [self.completionBlocks setValue:completedBlcok forKey:task.indentifire];
-    [self addDownloadList:task];
+    if (num < max) {
+        for (DownloadInfoMessage *info in self.taskList.copy) {
+            if (info.downloadState == DownloadStateWait) {
+                num++;
+                if (num >= max) {
+                    break;
+                }
+                info.downloadState = DownloadStateDownloading;
+            }
+        }
+    }
+    
+    for (DownloadInfoMessage *info in self.taskList.copy) {
+        if (info.downloadState == DownloadStateDownloading) {
+            [self beginDownloadInfo:info];
+        } else {
+        
+        }
+    }
+    
 }
 
 - (void)addDownloadList:(DownloadInfoMessage *)messageInfo {
@@ -133,7 +196,6 @@ NSString *const plistFileName = @"downloadConguration.plist";
     }
 }
 
-
 - (NSString *)mainPath {
     NSArray *cachePaths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *cachePath = [cachePaths objectAtIndex:0];
@@ -167,14 +229,19 @@ NSString *const plistFileName = @"downloadConguration.plist";
     
     DownloadInfoMessage *info = [self downloadMessage:request.indentifire];
     info.isFinished = YES;
-    
+    info.downloadState = DownloadStateFinished;
     completedBlock completedBlock = [self.completionBlocks valueForKey:request.indentifire];
     
     if (completedBlock) {
         completedBlock ([NSProgress new], YES);
     }
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:DownloadFinishedNotification object:request.indentifire];
+    if (self.downloadDelegate && [self.downloadDelegate respondsToSelector:@selector(downloadFinished:)]) {
+        [self.downloadDelegate downloadFinished:self];
+    }
+    
+    [self startDownoad];
+    
 }
 
 - (DownloadInfoMessage *)downloadMessage:(NSString *)identifire {
@@ -195,11 +262,13 @@ NSString *const plistFileName = @"downloadConguration.plist";
                 DownloadInfoMessage *infoMessage = (DownloadInfoMessage *)obj;
                 infoMessage.currentSize = progress.completedUnitCount;
                 infoMessage.fileSize = progress.totalUnitCount;
+                if (self.downloadDelegate && [self.downloadDelegate respondsToSelector:@selector(downloadUpdateProgress:identifire:)]) {
+                    [self.downloadDelegate downloadUpdateProgress:self identifire:request.indentifire];
+                }
                 *stop= YES;
             }
         }];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:DownloadChangedNotification object:@{DownloadIdentifire:request.indentifire, DownloadTotalProgress:@(progress.totalUnitCount),DownloadCurrentProgress:@(progress.completedUnitCount)}];
 }
 
 - (void)cancelDownloadUrl:(NSString *)url {
@@ -207,18 +276,30 @@ NSString *const plistFileName = @"downloadConguration.plist";
         return;
     }
     
+    NSString *identifire = [self md5String:url];
+    
     [self.requestList enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         
         if ([[obj downloadUrl] isEqualToString:url]) {
             
             [obj cancel];
             
-            [self saveDownloadTask];
-            
             *stop = YES;
         }
-        
     }];
+    
+    for (DownloadInfoMessage *message in self.taskList) {
+        if ([message.indentifire isEqualToString:identifire]) {
+            message.downloadState = DownloadStateWait;
+        }
+    }
+    [self saveDownloadTask];
+    
+    
+}
+
+- (NSString *)md5String:(NSString *)md5 {
+    return [DownloadUnitTool stringFromMD5:md5];
 }
 
 - (void)startDownloadUrl:(NSString *)url {
@@ -265,6 +346,10 @@ NSString *const plistFileName = @"downloadConguration.plist";
 - (NSString *)plistFilePath {
     NSString *mainPath = [self mainPath];
     return [mainPath stringByAppendingPathComponent:plistFileName];
+}
+
+- (void)setMaxCount:(NSInteger)maxCount {
+    _maxCount = maxCount;
 }
 
 @end
