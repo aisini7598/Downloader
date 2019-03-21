@@ -51,9 +51,7 @@
 }
 
 - (void)addDownloadTask:(UIBarButtonItem *)item {
-    
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"New Task" message:nil preferredStyle:UIAlertControllerStyleAlert];
-    
 
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.font = [UIFont systemFontOfSize:14.0f];
@@ -62,9 +60,11 @@
     
     UIAlertAction *action = [UIAlertAction actionWithTitle:@"Add" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         UITextField *textField = alertController.textFields.lastObject;
-        [[DYMDownloaderManager sharedInstance] downloadTaskUrl:textField.text completedBlcok:^(NSProgress *progress, BOOL finished) {
-            
-        }];
+        if (textField.text.length > 0) {
+            [[DYMDownloaderManager sharedInstance] downloadTaskUrl:textField.text completedBlcok:^(NSProgress *progress, BOOL finished) {
+                
+            }];
+        }
     }];
     
     [alertController addAction:action];
@@ -90,8 +90,7 @@
     
     [[DYMDownloaderManager sharedInstance] downloadTaskUrl:self.dataSource[indexPath.row]];
     
-    
-     }
+}
 
 /*
 // Override to support conditional editing of the table view.

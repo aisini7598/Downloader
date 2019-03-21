@@ -42,6 +42,11 @@ NSString *const downloadFinished = @"finished";
 
 @implementation DownloadTabelViewCell
 
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
@@ -53,9 +58,7 @@ NSString *const downloadFinished = @"finished";
         downloadNameLabel.textColor = [UIColor blackColor];
         
         [self.contentView addSubview:downloadNameLabel];
-        
         _downloadNameLabel = downloadNameLabel;
-        
         
         UIButton *downloadButton = [UIButton buttonWithType:UIButtonTypeCustom];
         [downloadButton setTitleColor:[UIColor blueColor] forState:UIControlStateNormal];
@@ -70,6 +73,7 @@ NSString *const downloadFinished = @"finished";
         [self.contentView addSubview:progressView];
         _progressView = progressView;
         
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateProgress:) name:DownloadChangedNotification object:nil];
         
     }
     return self;
@@ -87,6 +91,14 @@ NSString *const downloadFinished = @"finished";
     self.progressView.frame = CGRectMake(10, self.downloadNameLabel.frame.origin.y + self.downloadNameLabel.frame.size.height + 20, self.frame.size.width - 20, 10);
 }
 
+- (void)updateProgress:(NSNotification *)nf {
+    NSString *identifire = [nf object];
+    if ([identifire isEqualToString:self.info.indentifire]) {
+        CGFloat progress = self.info.currentSize == 0 ? 0 : self.info.currentSize * 1.0 / self.info.fileSize;
+        [self setProgress:progress];
+    }
+}
+
 - (void)buttonPress:(UIButton *)sender {
     if (self.delegate && [self.delegate respondsToSelector:@selector(downloadDidSeletedCell:)]) {
         [self.delegate downloadDidSeletedCell:self];
@@ -97,9 +109,17 @@ NSString *const downloadFinished = @"finished";
     _info = data;
     self.downloadNameLabel.text = data.downloadUrl.lastPathComponent;
     [self.downloadButton setTitle:data.isFinished ? @"完成":@"下载中" forState:UIControlStateNormal];
-    self.progressView.progress = data.currentSize == 0 ? 0 : data.currentSize * 1.0 / data.fileSize;
     [self setNeedsLayout];
+    CGFloat progress = data.currentSize == 0 ? 0 : data.currentSize * 1.0 / data.fileSize;
+    [self setProgress:progress];
 }
+
+
+- (void)setProgress:(CGFloat) progress{
+    NSLog(@"%@",@(progress));
+    self.progressView.progress = progress;
+}
+
 
 - (NSString *)stringOfState:(DownloadState)state {
     
@@ -258,25 +278,6 @@ NSString *const downloadFinished = @"finished";
 
 - (void)downloadExistTask:(DYMDownloaderManager *)downloadManager {
 
-}
-
-- (void)downloadUpdateProgress:(DYMDownloaderManager *)downloadManager identifire:(NSString *)indentifire {
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"indentifire = %@",indentifire];
-    NSArray *downloading = self.dataSource[self.sectionArray[0]];
-    
-    NSArray *filtArray = [downloading filteredArrayUsingPredicate:predicate];
-    
-    if (filtArray.count > 0) {
-        DownloadInfoMessage *info = downloading.lastObject;
-        
-        for (DownloadTabelViewCell *cell in self.downloadList.visibleCells) {
-            if ([cell.info.indentifire isEqualToString:info.indentifire]) {
-                [cell setData:info];
-            }
-            
-        }
-    }
-    
 }
 
 @end

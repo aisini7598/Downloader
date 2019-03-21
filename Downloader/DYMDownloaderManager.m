@@ -25,15 +25,11 @@ NSString *const plistFileName = @"downloadConguration.plist";
 @interface DYMDownloaderManager ()<DYMDownloaderRequestDelegate>
 
 @property (nonatomic) NSOperationQueue *downloadQueue;
-
 @property (nonatomic) NSMutableArray *taskList;
-
 @property (nonatomic) NSMutableDictionary *completionBlocks;
-
-
 @property (nonatomic) NSMutableArray *requestList;
-
 @property (nonatomic) NSInteger maxCount;
+@property (nonatomic) NSMutableDictionary *taskMap;
 
 @end
 
@@ -60,7 +56,7 @@ NSString *const plistFileName = @"downloadConguration.plist";
         
         _taskList = [NSMutableArray array];
         _completionBlocks = [NSMutableDictionary dictionary];
-        
+        _taskMap = [NSMutableDictionary dictionary];
         _requestList = [NSMutableArray array];
         
         NSArray *cacheList = [self downloadTasks].copy;
@@ -108,7 +104,6 @@ NSString *const plistFileName = @"downloadConguration.plist";
     task.downloadState = DownloadStateDownloading;
     [self.completionBlocks setValue:completedBlcok forKey:task.indentifire];
     [self addDownloadList:task];
-
     
     [self startDownoad];
 }
@@ -168,6 +163,7 @@ NSString *const plistFileName = @"downloadConguration.plist";
     @synchronized (self) {
         [[NSNotificationCenter defaultCenter] postNotificationName:DownloadAddNewTaskNotification object:@{@"downloadInfo":messageInfo}];
         [self.taskList addObject:messageInfo];
+        self.taskMap[messageInfo.indentifire] = messageInfo;
         [self saveDownloadTask];
     }
 }
@@ -213,11 +209,8 @@ NSString *const plistFileName = @"downloadConguration.plist";
 }
 
 - (NSString *)tempPath:(NSString *)url {
-    
     NSString *mainPath = [self mainPath];
-    
     mainPath = [mainPath stringByAppendingPathComponent:@"temp"];
-    
     if (![[NSFileManager defaultManager] fileExistsAtPath:mainPath]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:mainPath withIntermediateDirectories:YES attributes:nil error:nil];
     }
@@ -257,17 +250,10 @@ NSString *const plistFileName = @"downloadConguration.plist";
 
 - (void)downloadDidRequest:(DYMDownloaderRequest *)request progress:(NSProgress *)progress {
     @synchronized (self) {
-        [self.taskList enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            if ([request.indentifire isEqualToString:[(DownloadInfoMessage *)obj indentifire]]) {
-                DownloadInfoMessage *infoMessage = (DownloadInfoMessage *)obj;
-                infoMessage.currentSize = progress.completedUnitCount;
-                infoMessage.fileSize = progress.totalUnitCount;
-                if (self.downloadDelegate && [self.downloadDelegate respondsToSelector:@selector(downloadUpdateProgress:identifire:)]) {
-                    [self.downloadDelegate downloadUpdateProgress:self identifire:request.indentifire];
-                }
-                *stop= YES;
-            }
-        }];
+        DownloadInfoMessage *infoMessage = self.taskMap[request.indentifire];
+        infoMessage.currentSize = progress.completedUnitCount;
+        infoMessage.fileSize = progress.totalUnitCount;
+        [[NSNotificationCenter defaultCenter] postNotificationName:DownloadChangedNotification object:request.indentifire];
     }
 }
 

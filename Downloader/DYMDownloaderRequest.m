@@ -31,7 +31,6 @@
     if (self.downloadUrl.length > 0) {
         
         
-        
         NSURLSessionDownloadTask *downloadTask = [[AFNetworkServiceManager sharedInstanced] dowoloadUrl:self.downloadUrl filePath:self.downloadFilePath progress:^(NSProgress *progress) {
             
             if (self.delegate && [self.delegate respondsToSelector:@selector(downloadDidRequest:progress:)]) {
